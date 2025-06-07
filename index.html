@@ -1,176 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Organization Event Calendar</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 2rem;
-        background: #f8f9fa;
-      }
-      h1 {
-        text-align: center;
-        color: #333;
-      }
-      #calendar-controls {
-        text-align: center;
-        margin-bottom: 1rem;
-      }
-      button {
-        padding: 0.5rem 1rem;
-        margin: 0 0.5rem;
-        border: none;
-        background: #007bff;
-        color: white;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #0056b3;
-      }
-      #day-names {
-        display: grid;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organization Event Calendar</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 1rem; background: #f8f9fa; }
+    h1 { text-align: center; color: #333; font-size: 1.5rem; }
+    #calendar-controls { text-align: center; margin-bottom: 1rem; display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+    #day-names {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      font-weight: bold;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    #calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .day {
+      background: #fff;
+      padding: 0.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      min-height: 80px;
+      position: relative;
+      font-size: 0.85rem;
+    }
+    .day.today {
+      background: #cce5ff;
+      border: 2px solid #007bff;
+    }
+    .date {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    .event {
+      background: #e0f7fa;
+      padding: 0.25rem;
+      border-radius: 5px;
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+    }
+    #upcoming {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #fff3cd;
+      border-left: 5px solid #ffc107;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      #calendar, #day-names {
         grid-template-columns: repeat(7, 1fr);
-        font-weight: bold;
-        text-align: center;
-        margin-top: 1rem;
-      }
-      #calendar {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 1rem;
-        margin-top: 0.5rem;
+        font-size: 0.7rem;
       }
       .day {
-        background: #fff;
-        padding: 1rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        min-height: 100px;
-        position: relative;
-      }
-      .date {
-        font-weight: bold;
-        margin-bottom: 0.5rem;
+        padding: 0.25rem;
+        min-height: 60px;
       }
       .event {
-        background: #e0f7fa;
-        padding: 0.5rem;
-        border-radius: 6px;
-        margin-top: 0.25rem;
-        font-size: 0.9rem;
+        font-size: 0.65rem;
       }
-      #upcoming {
-        margin-top: 2rem;
-        padding: 1rem;
-        background: #fff3cd;
-        border-left: 5px solid #ffc107;
+    }
+    @media (max-width: 480px) {
+      #calendar-controls {
+        flex-direction: column;
+        gap: 0.5rem;
       }
-    </style>
-  </head>
-  <body>
-    <h1>Organization Event Calendar</h1>
-    <div id="calendar-controls">
-      <button onclick="prevMonth()">Previous Month</button>
-      <span id="month-label"></span>
-      <button onclick="nextMonth()">Next Month</button>
-    </div>
-    <div id="upcoming"></div>
-    <div id="day-names">
-      <div>Sunday</div>
-      <div>Monday</div>
-      <div>Tuesday</div>
-      <div>Wednesday</div>
-      <div>Thursday</div>
-      <div>Friday</div>
-      <div>Saturday</div>
-    </div>
-    <div id="calendar"></div>
+    }
+  </style>
+</head>
+<body>
+  <h1>Organization Event Calendar</h1>
+  <div id="calendar-controls">
+    <button onclick="prevMonth()">Previous Month</button>
+    <span id="month-label"></span>
+    <button onclick="nextMonth()">Next Month</button>
+  </div>
+  <div id="upcoming"></div>
+  <div id="day-names">
+    <div>Sunday</div>
+    <div>Monday</div>
+    <div>Tuesday</div>
+    <div>Wednesday</div>
+    <div>Thursday</div>
+    <div>Friday</div>
+    <div>Saturday</div>
+  </div>
+  <div id="calendar"></div>
 
-    <script>
-      let events = [];
-      let current = new Date();
-      current.setDate(1);
+  <script>
+    let events = [];
+    let current = new Date();
+    current.setDate(1);
 
-      const calendar = document.getElementById("calendar");
-      const upcomingBox = document.getElementById("upcoming");
-      const monthLabel = document.getElementById("month-label");
+    const calendar = document.getElementById("calendar");
+    const upcomingBox = document.getElementById("upcoming");
+    const monthLabel = document.getElementById("month-label");
 
-      async function loadEvents() {
-        try {
-          const res = await fetch(
-            "https://raw.githubusercontent.com/AbdulrahmanSarsar/event-calendar/refs/heads/main/events.json"
-          );
-          events = await res.json();
-          renderCalendar();
-          renderUpcoming();
-        } catch (error) {
-          console.error("Error loading events:", error);
-        }
-      }
-
-      function renderCalendar() {
-        calendar.innerHTML = "";
-        const year = current.getFullYear();
-        const month = current.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const firstDayIndex = new Date(year, month, 1).getDay();
-
-        monthLabel.textContent = `${year} - ${month + 1}`;
-
-        for (let i = 0; i < firstDayIndex; i++) {
-          const emptyBox = document.createElement("div");
-          calendar.appendChild(emptyBox);
-        }
-
-        for (let i = 1; i <= daysInMonth; i++) {
-          const dateStr = `${year}-${(month + 1)
-            .toString()
-            .padStart(2, "0")}-${i.toString().padStart(2, "0")}`;
-          const dayBox = document.createElement("div");
-          dayBox.classList.add("day");
-          const dateEl = document.createElement("div");
-          dateEl.classList.add("date");
-          dateEl.textContent = dateStr;
-          dayBox.appendChild(dateEl);
-
-          const dayEvents = events.filter((e) => e.date === dateStr);
-          dayEvents.forEach((e) => {
-            const eventEl = document.createElement("div");
-            eventEl.classList.add("event");
-            eventEl.textContent = e.title;
-            dayBox.appendChild(eventEl);
-          });
-
-          calendar.appendChild(dayBox);
-        }
-      }
-
-      function nextMonth() {
-        if (current.getFullYear() === 2026 && current.getMonth() === 11) return;
-        current.setMonth(current.getMonth() + 1);
+    async function loadEvents() {
+      try {
+        const res = await fetch("https://raw.githubusercontent.com/AbdulrahmanSarsar/event-calendar/refs/heads/main/events.json");
+        events = await res.json();
         renderCalendar();
+        renderUpcoming();
+      } catch (error) {
+        console.error("Error loading events:", error);
+      }
+    }
+
+    function renderCalendar() {
+      calendar.innerHTML = "";
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDayIndex = new Date(year, month, 1).getDay();
+
+      monthLabel.textContent = `${year} - ${month + 1}`;
+
+      for (let i = 0; i < firstDayIndex; i++) {
+        const emptyBox = document.createElement("div");
+        calendar.appendChild(emptyBox);
       }
 
-      function prevMonth() {
-        if (current.getFullYear() === 2025 && current.getMonth() === 0) return;
-        current.setMonth(current.getMonth() - 1);
-        renderCalendar();
-      }
+      const todayStr = new Date().toISOString().split("T")[0];
 
-      function renderUpcoming() {
-        const today = new Date();
-        const upcoming = events
-          .filter((e) => new Date(e.date) >= today)
-          .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
-        if (upcoming) {
-          upcomingBox.innerHTML = `<strong>Upcoming Event:</strong> ${upcoming.title} on ${upcoming.date}`;
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+        const dayBox = document.createElement("div");
+        dayBox.classList.add("day");
+        if (dateStr === todayStr) {
+          dayBox.classList.add("today");
         }
-      }
+        const dateEl = document.createElement("div");
+        dateEl.classList.add("date");
+        dateEl.textContent = dateStr;
+        dayBox.appendChild(dateEl);
 
-      loadEvents();
-    </script>
-  </body>
+        const dayEvents = events.filter(e => e.date === dateStr);
+        dayEvents.forEach(e => {
+          const eventEl = document.createElement("div");
+          eventEl.classList.add("event");
+          eventEl.textContent = e.title;
+          dayBox.appendChild(eventEl);
+        });
+
+        calendar.appendChild(dayBox);
+      }
+    }
+
+    function nextMonth() {
+      if (current.getFullYear() === 2026 && current.getMonth() === 11) return;
+      current.setMonth(current.getMonth() + 1);
+      renderCalendar();
+    }
+
+    function prevMonth() {
+      if (current.getFullYear() === 2025 && current.getMonth() === 0) return;
+      current.setMonth(current.getMonth() - 1);
+      renderCalendar();
+    }
+
+    function renderUpcoming() {
+      const today = new Date();
+      const upcoming = events.filter(e => new Date(e.date) >= today)
+                             .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      if (upcoming) {
+        upcomingBox.innerHTML = `<strong>Upcoming Event:</strong> ${upcoming.title} on ${upcoming.date}`;
+      }
+    }
+
+    loadEvents();
+  </script>
+</body>
 </html>
