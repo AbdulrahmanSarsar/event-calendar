@@ -292,7 +292,7 @@
           popupContent.innerHTML =
             `<h3>Events on ${date}</h3><ul>` +
             selectedEvents
-              .map((e) => `<li><strong>${e.title}</strong></li>`)
+              .map((e) => `<li><strong>${e.program + " - " + e.title}</strong></li>`)
               .join("") +
             `</ul>`;
         }
